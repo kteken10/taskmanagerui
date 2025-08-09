@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: depend_on_referenced_packages
+import 'package:intl/intl.dart';
+
+import '../model/task.dart';
+import '../providers/task_provider.dart';
+import '../l10n/app_localizations.dart';
+import '../services/analytics_service.dart';
+import '../services/notification_service.dart';
+
+class TaskCard extends ConsumerWidget {
+  final Task task;
+
+  const TaskCard({required this.task, super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context);
+
+    Color getStatusColor() {
+      switch (task.status) {
+        case TaskStatus.NotStarted:
+          return theme.colorScheme.secondaryContainer;
+        case TaskStatus.Started:
+          return theme.colorScheme.primaryContainer;
+        case TaskStatus.Completed:
+          return theme.colorScheme.tertiaryContainer;
+      }
+    }
+
+    return Card(
+      color: getStatusColor(),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    task.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )),
+                ),
+                if (task.status == TaskStatus.Completed)
+                  Icon(Icons.check_circle, color: theme.colorScheme.onTertiaryContainer),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (task.description.isNotEmpty)
+              Text(task.description, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text(
+                  '${localizations.deadline}: ${task.formattedDeadline}',
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (task.status != TaskStatus.Completed)
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 18),
+                    onPressed: () => _editDeadline(context, ref),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildActionButton(context, ref, localizations),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, WidgetRef ref, AppLocalizations localizations) {
+    switch (task.status) {
+      case TaskStatus.NotStarted:
+        return ElevatedButton(
+          child: Text(localizations.startTask),
+          onPressed: () {
+            ref.read(taskProvider.notifier).updateTaskStatus(task.id, TaskStatus.Started);
+            AnalyticsService.logTaskEvent('start_task', task);
+          },
+        );
+      case TaskStatus.Started:
+        return Row(
+          children: [
+            ElevatedButton(
+              child: Text(localizations.markComplete),
+              onPressed: () {
+                ref.read(taskProvider.notifier).updateTaskStatus(task.id, TaskStatus.Completed);
+                AnalyticsService.logTaskEvent('complete_task', task);
+                NotificationService.cancelNotification(task);
+              },
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton(
+              child: Text(localizations.revert),
+              onPressed: () {
+                ref.read(taskProvider.notifier).updateTaskStatus(task.id, TaskStatus.NotStarted);
+                AnalyticsService.logTaskEvent('revert_task', task);
+              },
+            ),
+          ],
+        );
+      case TaskStatus.Completed:
+        return OutlinedButton(
+          child: Text(localizations.reopen),
+          onPressed: () {
+            ref.read(taskProvider.notifier).updateTaskStatus(task.id, TaskStatus.Started);
+            AnalyticsService.logTaskEvent('reopen_task', task);
+            NotificationService.scheduleTaskNotification(task.copyWith(status: TaskStatus.Started));
+          },
+        );
+    }
+  }
+
+  Future<void> _editDeadline(BuildContext context, WidgetRef ref) async {
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: task.deadline,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (newDate != null) {
+      ref.read(taskProvider.notifier).updateDeadline(task.id, newDate);
+      AnalyticsService.logTaskEvent('update_deadline', task);
+      if (task.status != TaskStatus.NotStarted) {
+        NotificationService.scheduleTaskNotification(task.copyWith(deadline: newDate));
+      }
+    }
+  }
+}
