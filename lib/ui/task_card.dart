@@ -19,7 +19,7 @@ class TaskCard extends ConsumerWidget {
 
     Color getStatusBorderColor() {
       switch (task.status) {
-        case TaskStatus.NotStarted: return Colors.grey;
+        case TaskStatus.NotStarted: return const Color.fromARGB(255, 180, 178, 178).withOpacity(0.5);
         case TaskStatus.Started: return Colors.blue;
         case TaskStatus.Completed: return Colors.green;
       }
