@@ -5,6 +5,7 @@ import '../providers/task_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/analytics_service.dart';
 import '../services/notification_service.dart';
+// ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 
 class TaskCard extends ConsumerWidget {
@@ -94,11 +95,13 @@ class TaskCard extends ConsumerWidget {
   }
 
   Future<void> _editStartDate(BuildContext context, WidgetRef ref) async {
+    final now = DateTime.now();
+    final initialDate = task.startDate.isAfter(now) ? task.startDate : now;
     final newDate = await showDatePicker(
       context: context,
-      initialDate: task.startDate,
-      firstDate: DateTime(DateTime.now().year - 1),
-      lastDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
     );
     if (newDate != null) {
       ref.read(taskProvider.notifier).updateStartDate(task.id, newDate);
@@ -110,25 +113,19 @@ class TaskCard extends ConsumerWidget {
 class _TaskCardLine extends StatelessWidget {
   final Widget left;
   final Widget right;
-  final double verticalPadding;
 
   const _TaskCardLine({
     required this.left,
     required this.right,
-    this.verticalPadding = 0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: verticalPadding),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: left)),
-          right,
-        ],
-      ),
+    return Row(
+      children: [
+        Expanded(child: Align(alignment: Alignment.centerLeft, child: left)),
+        right,
+      ],
     );
   }
 }
@@ -144,18 +141,13 @@ class _TitleSection extends StatelessWidget {
     return Row(
       children: [
         if (task.highPriority)
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Icon(Icons.warning, color: Colors.red, size: 16),
-          ),
-        Expanded(
-          child: Text(
-            task.title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-              decoration: TextDecoration.underline,
-            ),
+          Icon(Icons.warning, color: Colors.red, size: 16),
+        Text(
+          task.title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+            decoration: TextDecoration.underline,
           ),
         ),
       ],
@@ -184,7 +176,6 @@ class _StatusSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           task.timeStatus,
@@ -239,15 +230,13 @@ class _StartDateSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          task.status != TaskStatus.NotStarted
-              ? 'Started: ${DateFormat('MMM d').format(task.startDate)}'
-              : '',
+          'Start: ${DateFormat('MMM d').format(task.startDate)}',
           style: theme.textTheme.bodySmall,
         ),
-        if (task.status != TaskStatus.NotStarted && task.status != TaskStatus.Completed)
+        // On peut modifier la date de début uniquement si la tâche n'a pas encore démarré
+        if (task.status == TaskStatus.NotStarted)
           IconButton(
             icon: const Icon(Icons.edit, size: 16),
             onPressed: onEditStartDate,
@@ -276,10 +265,7 @@ class _AssignedSection extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         if (task.highPriority && task.assignedTo.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text('•', style: TextStyle(color: Colors.grey)),
-          ),
+          Text('•', style: TextStyle(color: Colors.grey)),
         if (task.highPriority)
           Text(
             'High Priority',
@@ -315,10 +301,9 @@ class _ActionSection extends StatelessWidget {
         );
       case TaskStatus.Started:
         return Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.check_circle, size: 20),
+              icon: const Icon(Icons.check_circle, size: 18),
               color: Colors.green,
               tooltip: localizations.markComplete,
               onPressed: () {
@@ -329,7 +314,7 @@ class _ActionSection extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.undo, size: 20),
+              icon: const Icon(Icons.undo, size: 18),
               color: Colors.blue,
               tooltip: localizations.revert,
               onPressed: () {
@@ -341,7 +326,7 @@ class _ActionSection extends StatelessWidget {
         );
       case TaskStatus.Completed:
         return IconButton(
-          icon: const Icon(Icons.refresh, size: 20),
+          icon: const Icon(Icons.refresh, size: 18),
           color: Colors.blue,
           tooltip: localizations.reopen,
           onPressed: () {

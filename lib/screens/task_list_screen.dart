@@ -6,17 +6,18 @@ import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../ui/add_taskbutton.dart'; // Assure-toi que ce fichier contient AddTaskButton
 import '../ui/pulsing_avatar.dart';
 import '../ui/reorderable_task_list.dart';
 import '../ui/task_filter.dart' show TaskFilter, TaskFilterBar;
-import '../ui/add_task_dialog.dart'; 
+import '../ui/add_task_dialog.dart';
+
 import 'app_padding.dart';
 
 class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _TaskListScreenState createState() => _TaskListScreenState();
 }
 
@@ -41,9 +42,28 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
     final searchText = _searchController.text.toLowerCase();
     final searchedTasks = searchText.isEmpty
         ? filteredTasks
-        : filteredTasks.where((task) =>
-            task.title.toLowerCase().contains(searchText) ||
-            task.description.toLowerCase().contains(searchText)).toList();
+        : filteredTasks
+            .where((task) =>
+                task.title.toLowerCase().contains(searchText) ||
+                task.description.toLowerCase().contains(searchText))
+            .toList();
+
+    // Tri personnalisé : Started > Completed > NotStarted
+    final sortedTasks = [...searchedTasks];
+    sortedTasks.sort((a, b) {
+      int getOrder(TaskStatus status) {
+        switch (status) {
+          case TaskStatus.Started:
+            return 0;
+          case TaskStatus.Completed:
+            return 1;
+          case TaskStatus.NotStarted:
+            return 2;
+        }
+      }
+
+      return getOrder(a.status).compareTo(getOrder(b.status));
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +110,8 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
                     color: isDarkMode ? Colors.blue[200] : Colors.blue[800],
                   ),
                 ),
-                onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
+                onPressed: () =>
+                    ref.read(localeProvider.notifier).toggleLocale(),
               ),
             ],
           ),
@@ -99,22 +120,32 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
       body: AppPadding(
         child: Column(
           children: [
-            TaskFilterBar(
-              selectedFilter: _filter,
-              onFilterSelected: (filter) {
-                setState(() {
-                  _filter = filter;
-                });
-              },
-              onSearchChanged: (query) {
-                setState(() {});
-              },
-              searchController: _searchController,
+            Row(
+              children: [
+                Expanded(
+                  child: TaskFilterBar(
+                    selectedFilter: _filter,
+                    onFilterSelected: (filter) {
+                      setState(() {
+                        _filter = filter;
+                      });
+                    },
+                    onSearchChanged: (query) {
+                      setState(() {});
+                    },
+                    searchController: _searchController,
+                    onAddTask: () =>
+                        _showAddTaskDialog(context), // Passe l'action ici
+                  ),
+                ),
+              
+              ],
             ),
+            SizedBox(height: 8),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
-                child: searchedTasks.isEmpty
+                child: sortedTasks.isEmpty
                     ? Center(
                         key: const ValueKey('empty'),
                         child: Text(
@@ -124,18 +155,12 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
                       )
                     : ReorderableTaskList(
                         key: const ValueKey('list'),
-                        tasks: searchedTasks,
+                        tasks: sortedTasks,
                       ),
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: isDarkMode ? Colors.amber[600] : Colors.indigo,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-        onPressed: () => _showAddTaskDialog(context),
       ),
     );
   }

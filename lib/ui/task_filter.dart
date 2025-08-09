@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import 'add_taskbutton.dart'; // Import du bouton
 
-// If TaskFilter is not defined in task.dart, define it here:
 enum TaskFilter { All, NotStarted, Started, Completed, Overdue }
 
 class TaskFilterBar extends StatefulWidget {
@@ -9,7 +9,8 @@ class TaskFilterBar extends StatefulWidget {
   final ValueChanged<TaskFilter> onFilterSelected;
   final EdgeInsetsGeometry? padding;
   final ValueChanged<String> onSearchChanged;
-  final TextEditingController? searchController; // Nouveau paramètre
+  final TextEditingController? searchController;
+  final VoidCallback? onAddTask; // Ajout du paramètre
 
   const TaskFilterBar({
     super.key,
@@ -18,6 +19,7 @@ class TaskFilterBar extends StatefulWidget {
     required this.onSearchChanged,
     this.padding,
     this.searchController,
+    this.onAddTask, // Ajout du paramètre
   });
 
   @override
@@ -42,8 +44,9 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ligne avec le titre et le champ de recherche animé
+          // Ligne avec le titre, le champ de recherche et le bouton d'ajout
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 "Filter Tasks:",
@@ -58,7 +61,7 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
               // AnimatedContainer pour le champ de recherche
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: _isSearching ? 200 : 0,
+                width: _isSearching ? 180 : 0,
                 height: 40,
                 curve: Curves.easeInOut,
                 child: _isSearching
@@ -110,6 +113,14 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
                   },
                 ),
               ),
+
+              const Spacer(), // Pousse le bouton d'ajout à droite
+
+              // Bouton d'ajout centré verticalement à droite
+              if (widget.onAddTask != null)
+                AddTaskButton(
+                  onPressed: widget.onAddTask!,
+                ),
             ],
           ),
 
