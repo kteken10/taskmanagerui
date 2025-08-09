@@ -95,13 +95,11 @@ class TaskCard extends ConsumerWidget {
   }
 
   Future<void> _editStartDate(BuildContext context, WidgetRef ref) async {
-    final now = DateTime.now();
-    final initialDate = task.startDate.isAfter(now) ? task.startDate : now;
     final newDate = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+      initialDate: task.startDate,
+      firstDate: DateTime(DateTime.now().year - 1),
+      lastDate: DateTime.now(),
     );
     if (newDate != null) {
       ref.read(taskProvider.notifier).updateStartDate(task.id, newDate);
