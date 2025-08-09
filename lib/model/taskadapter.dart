@@ -13,6 +13,9 @@ class TaskAdapter extends TypeAdapter<Task> {
       description: reader.read(),
       deadline: reader.read(),
       status: reader.read(),
+      assignedTo: reader.read(),
+      highPriority: reader.read(),
+      startDate: reader.read(),
     );
   }
 
@@ -23,5 +26,8 @@ class TaskAdapter extends TypeAdapter<Task> {
     writer.write(obj.description);
     writer.write(obj.deadline);
     writer.write(obj.status);
+    writer.write(obj.assignedTo);
+    writer.write(obj.highPriority);
+    writer.write(obj.startDate);
   }
 }

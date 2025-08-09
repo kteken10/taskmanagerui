@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+// ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 
 part 'task.g.dart';
@@ -26,6 +27,9 @@ class Task {
   @HiveField(6)
   final bool highPriority;
 
+  @HiveField(7)
+  DateTime startDate;
+
   Task({
     required this.id,
     required this.title,
@@ -34,7 +38,8 @@ class Task {
     this.status = TaskStatus.NotStarted,
     this.assignedTo = '',
     this.highPriority = false,
-  });
+    DateTime? startDate,
+  }) : startDate = startDate ?? deadline;
 
   Task copyWith({
     String? id,
@@ -44,6 +49,7 @@ class Task {
     TaskStatus? status,
     String? assignedTo,
     bool? highPriority,
+    DateTime? startDate,
   }) {
     return Task(
       id: id ?? this.id,
@@ -53,10 +59,12 @@ class Task {
       status: status ?? this.status,
       assignedTo: assignedTo ?? this.assignedTo,
       highPriority: highPriority ?? this.highPriority,
+      startDate: startDate ?? this.startDate,
     );
   }
 
   String get formattedDeadline => DateFormat('yyyy-MM-dd').format(deadline);
+  String get formattedStartDate => DateFormat('yyyy-MM-dd').format(startDate);
 
   String get timeStatus {
     final now = DateTime.now();
@@ -79,11 +87,14 @@ class Task {
 @HiveType(typeId: 1)
 enum TaskStatus {
   @HiveField(0)
+  // ignore: constant_identifier_names
   NotStarted,
   
   @HiveField(1)
+  // ignore: constant_identifier_names
   Started,
   
   @HiveField(2)
+  // ignore: constant_identifier_names
   Completed,
 }

@@ -9,13 +9,14 @@ import '../l10n/app_localizations.dart';
 import '../ui/pulsing_avatar.dart';
 import '../ui/reorderable_task_list.dart';
 import '../ui/task_filter.dart' show TaskFilter, TaskFilterBar;
-import '../ui/add_task_dialog.dart'; // Nouvelle importation
+import '../ui/add_task_dialog.dart'; 
 import 'app_padding.dart';
 
 class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _TaskListScreenState createState() => _TaskListScreenState();
 }
 

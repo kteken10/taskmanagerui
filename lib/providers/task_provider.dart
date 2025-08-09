@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../model/task.dart';
 import '../services/hive_service.dart';
 
@@ -17,7 +16,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   void updateTaskStatus(String taskId, TaskStatus newStatus) {
     state = state.map((task) {
-      if (task.id == taskId) return task.copyWith(status: newStatus);
+      if (task.id == taskId) {
+        return task.copyWith(
+          status: newStatus,
+          startDate: newStatus == TaskStatus.Started 
+              ? DateTime.now() 
+              : task.startDate,
+        );
+      }
       return task;
     }).toList();
     _saveToHive();
@@ -26,6 +32,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   void updateDeadline(String taskId, DateTime newDeadline) {
     state = state.map((task) {
       if (task.id == taskId) return task.copyWith(deadline: newDeadline);
+      return task;
+    }).toList();
+    _saveToHive();
+  }
+
+  void updateStartDate(String taskId, DateTime newStartDate) {
+    state = state.map((task) {
+      if (task.id == taskId) return task.copyWith(startDate: newStartDate);
       return task;
     }).toList();
     _saveToHive();
