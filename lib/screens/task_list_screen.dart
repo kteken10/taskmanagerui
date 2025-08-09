@@ -38,14 +38,16 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
     final localizations = AppLocalizations.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    // Filtre supplémentaire par recherche
-    final searchedTasks = _searchController.text.isEmpty
+    // Filtre supplémentaire par recherche (titre ou description)
+    final searchText = _searchController.text.toLowerCase();
+    final searchedTasks = searchText.isEmpty
         ? filteredTasks
-        : filteredTasks.where((task) => task.title.toLowerCase().contains(_searchController.text.toLowerCase()) || task.description.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+        : filteredTasks.where((task) =>
+            task.title.toLowerCase().contains(searchText) ||
+            task.description.toLowerCase().contains(searchText)).toList();
 
     return Scaffold(
       appBar: AppBar(
-        // Appliquer le padding horizontal sur la ligne entière du AppBar
         titleSpacing: 0, // Pour coller au padding personnalisé
         title: AppPadding(
           child: Row(
@@ -98,7 +100,6 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
       body: AppPadding(
         child: Column(
           children: [
-            // Barre de filtre avec recherche
             TaskFilterBar(
               selectedFilter: _filter,
               onFilterSelected: (filter) {
@@ -107,8 +108,9 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
                 });
               },
               onSearchChanged: (query) {
-                setState(() {});
+                setState(() {}); // Rebuild pour appliquer filtre recherche
               },
+              searchController: _searchController,  // <-- contrôle partagé ici
             ),
             Expanded(
               child: AnimatedSwitcher(

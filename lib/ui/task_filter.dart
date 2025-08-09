@@ -9,6 +9,7 @@ class TaskFilterBar extends StatefulWidget {
   final ValueChanged<TaskFilter> onFilterSelected;
   final EdgeInsetsGeometry? padding;
   final ValueChanged<String> onSearchChanged;
+  final TextEditingController? searchController; // Nouveau paramètre
 
   const TaskFilterBar({
     super.key,
@@ -16,6 +17,7 @@ class TaskFilterBar extends StatefulWidget {
     required this.onFilterSelected,
     required this.onSearchChanged,
     this.padding,
+    this.searchController,
   });
 
   @override
@@ -24,7 +26,6 @@ class TaskFilterBar extends StatefulWidget {
 
 class _TaskFilterBarState extends State<TaskFilterBar> {
   bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +65,7 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
                     ? Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: TextField(
-                          controller: _searchController,
+                          controller: widget.searchController,
                           onChanged: widget.onSearchChanged,
                           decoration: InputDecoration(
                             focusedBorder: const OutlineInputBorder(
@@ -102,7 +103,7 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
                     setState(() {
                       _isSearching = !_isSearching;
                       if (!_isSearching) {
-                        _searchController.clear();
+                        widget.searchController?.clear();
                         widget.onSearchChanged('');
                       }
                     });
