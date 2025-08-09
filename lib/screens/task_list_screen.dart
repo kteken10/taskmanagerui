@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../model/task.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
-import '../ui/add_taskbutton.dart'; // Assure-toi que ce fichier contient AddTaskButton
+
 import '../ui/pulsing_avatar.dart';
 import '../ui/reorderable_task_list.dart';
 import '../ui/task_filter.dart' show TaskFilter, TaskFilterBar;
@@ -18,6 +17,7 @@ class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _TaskListScreenState createState() => _TaskListScreenState();
 }
 
