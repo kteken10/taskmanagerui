@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ignore: depend_on_referenced_packages
-import 'package:intl/intl.dart';
+
 
 import '../model/task.dart';
 import '../providers/task_provider.dart';
@@ -33,7 +33,7 @@ class TaskCard extends ConsumerWidget {
     return Card(
       color: getStatusColor(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 8,horizontal: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
