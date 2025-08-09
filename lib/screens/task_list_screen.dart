@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../model/task.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
-import '../services/analytics_service.dart';
 import '../ui/pulsing_avatar.dart';
 import '../ui/reorderable_task_list.dart';
 import '../ui/task_filter.dart' show TaskFilter, TaskFilterBar;
-import 'app_padding.dart'; // import du widget padding
+import '../ui/add_task_dialog.dart'; // Nouvelle importation
+import 'app_padding.dart';
 
 class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
@@ -38,7 +37,6 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
     final localizations = AppLocalizations.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    // Filtre supplémentaire par recherche (titre ou description)
     final searchText = _searchController.text.toLowerCase();
     final searchedTasks = searchText.isEmpty
         ? filteredTasks
@@ -48,7 +46,7 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0, // Pour coller au padding personnalisé
+        titleSpacing: 0,
         title: AppPadding(
           child: Row(
             children: [
@@ -108,9 +106,9 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
                 });
               },
               onSearchChanged: (query) {
-                setState(() {}); // Rebuild pour appliquer filtre recherche
+                setState(() {});
               },
-              searchController: _searchController,  // <-- contrôle partagé ici
+              searchController: _searchController,
             ),
             Expanded(
               child: AnimatedSwitcher(
@@ -136,7 +134,7 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
         backgroundColor: isDarkMode ? Colors.amber[600] : Colors.indigo,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
-        onPressed: () => _showAddTaskDialog(context, ref),
+        onPressed: () => _showAddTaskDialog(context),
       ),
     );
   }
@@ -160,113 +158,10 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
     }).toList();
   }
 
-  Future<void> _showAddTaskDialog(BuildContext context, WidgetRef ref) async {
-    final theme = Theme.of(context);
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    DateTime deadline = DateTime.now().add(const Duration(days: 1));
-
-    final localizations = AppLocalizations.of(context);
-
+  Future<void> _showAddTaskDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.dialogBackgroundColor,
-        title: Text(
-          localizations.addTask,
-          style: theme.textTheme.titleLarge,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: localizations.title,
-                labelStyle: theme.textTheme.bodyMedium,
-              ),
-              style: theme.textTheme.bodyMedium,
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: InputDecoration(
-                labelText: localizations.description,
-                labelStyle: theme.textTheme.bodyMedium,
-              ),
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  '${localizations.deadline}: ',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                TextButton(
-                  child: Text(
-                    DateFormat('yyyy-MM-dd').format(deadline),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  onPressed: () async {
-                    final newDate = await showDatePicker(
-                      context: context,
-                      initialDate: deadline,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      builder: (context, child) => Theme(
-                        data: theme.copyWith(
-                          colorScheme: theme.colorScheme.copyWith(
-                            primary: theme.colorScheme.primary,
-                          ),
-                        ),
-                        child: child!,
-                      ),
-                    );
-                    if (newDate != null) {
-                      deadline = newDate;
-                    }
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              localizations.cancel,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-            ),
-            onPressed: () {
-              final newTask = Task(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                title: titleController.text,
-                description: descriptionController.text,
-                deadline: deadline,
-              );
-              ref.read(taskProvider.notifier).addTask(newTask);
-              AnalyticsService.logTaskEvent('add_task', newTask);
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              localizations.add,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
+      builder: (context) => const AddTaskDialog(),
     );
   }
 }

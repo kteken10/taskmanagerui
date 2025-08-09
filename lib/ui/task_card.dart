@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// ignore: depend_on_referenced_packages
-
-
 import '../model/task.dart';
 import '../providers/task_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/analytics_service.dart';
 import '../services/notification_service.dart';
+import 'package:intl/intl.dart';
 
 class TaskCard extends ConsumerWidget {
   final Task task;
@@ -30,47 +28,94 @@ class TaskCard extends ConsumerWidget {
       }
     }
 
+    Color _getStatusBorderColor() {
+      switch (task.status) {
+        case TaskStatus.NotStarted:
+          return Colors.grey;
+        case TaskStatus.Started:
+          return Colors.blue;
+        case TaskStatus.Completed:
+          return Colors.green;
+      }
+    }
+
     return Card(
       color: getStatusColor(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8,horizontal: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    task.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    )),
-                ),
-                if (task.status == TaskStatus.Completed)
-                  Icon(Icons.check_circle, color: theme.colorScheme.onTertiaryContainer),
-              ],
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: _getStatusBorderColor(),
+              width: 4,
             ),
-            const SizedBox(height: 8),
-            if (task.description.isNotEmpty)
-              Text(task.description, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text(
-                  '${localizations.deadline}: ${task.formattedDeadline}',
-                  style: theme.textTheme.bodySmall,
-                ),
-                if (task.status != TaskStatus.Completed)
-                  IconButton(
-                    icon: Icon(Icons.edit, size: 18),
-                    onPressed: () => _editDeadline(context, ref),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (task.highPriority)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Icon(Icons.warning, 
+                              color: Colors.red, 
+                              size: 16),
+                          ),
+                        Expanded(
+                          child: Text(
+                            task.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _buildActionButton(context, ref, localizations),
-          ],
+                  if (task.assignedTo.isNotEmpty)
+                    Text(
+                      task.assignedTo,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (task.description.isNotEmpty)
+                Text(task.description, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text(
+                    task.timeStatus,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  if (task.status == TaskStatus.Started)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        'Started: ${DateFormat('MMM d').format(task.deadline)}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                  if (task.status != TaskStatus.Completed)
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18),
+                      onPressed: () => _editDeadline(context, ref),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildActionButton(context, ref, localizations),
+            ],
+          ),
         ),
       ),
     );
